@@ -43,32 +43,34 @@ export default function AdminFinanceiro() {
 
   const kpis = useMemo(() => {
     if (!rrts || !projetos) return null
+    // Filtra fora itens consolidados em outro (não somam — NF está no principal)
+    const rrtsCount = rrts.filter(r => !r.billingPrincipalId)
+    const projetosCount = projetos.filter(p => !p.billingPrincipalId)
+
     const receita =
-      rrts
+      rrtsCount
         .filter(r => r.status === 'PAGO')
         .reduce((sum, r) => sum + r.valorCobradoCliente, 0) +
-      projetos
+      projetosCount
         .filter(p => p.status === 'PAGO')
         .reduce((sum, p) => sum + p.valor, 0)
 
     const aReceber =
-      rrts
+      rrtsCount
         .filter(r => ['DEFINITIVA', 'NF_EMITIDA'].includes(r.status))
         .reduce((sum, r) => sum + r.valorCobradoCliente, 0) +
-      projetos
-        .filter(p => p.status === 'ENTREGUE')
+      projetosCount
+        .filter(p => ['ENTREGUE', 'NF_EMITIDA' as never].includes(p.status))
         .reduce((sum, p) => sum + p.valor, 0)
 
-    // Inadimplência: NF_EMITIDA com previsão de pagamento já vencida
     const now = new Date()
-    const inadimplencia = rrts
+    const inadimplencia = rrtsCount
       .filter(r => r.status === 'NF_EMITIDA' && r.previsaoPagamento && r.previsaoPagamento.toDate() < now)
       .reduce((sum, r) => sum + r.valorCobradoCliente, 0)
 
-    const taxaCAUTotal =
-      rrts
-        .filter(r => r.status !== 'CANCELADA' && r.boletoPorMim)
-        .reduce((sum, r) => sum + r.taxaCAU, 0)
+    const taxaCAUTotal = rrts
+      .filter(r => r.status !== 'CANCELADA' && r.boletoPorMim)
+      .reduce((sum, r) => sum + r.taxaCAU, 0)
 
     return { receita, aReceber, inadimplencia, taxaCAUTotal }
   }, [rrts, projetos])
@@ -77,13 +79,13 @@ export default function AdminFinanceiro() {
     if (!rrts || !projetos) return []
     const m = new Map<string, number>()
     rrts
-      .filter(r => r.status === 'PAGO' && r.dataPagamento)
+      .filter(r => !r.billingPrincipalId && r.status === 'PAGO' && r.dataPagamento)
       .forEach(r => {
         const key = formatDate(r.dataPagamento, 'yyyy-MM')
         m.set(key, (m.get(key) ?? 0) + r.valorCobradoCliente)
       })
     projetos
-      .filter(p => p.status === 'PAGO' && p.dataPagamento)
+      .filter(p => !p.billingPrincipalId && p.status === 'PAGO' && p.dataPagamento)
       .forEach(p => {
         const key = formatDate(p.dataPagamento, 'yyyy-MM')
         m.set(key, (m.get(key) ?? 0) + p.valor)
@@ -102,18 +104,27 @@ export default function AdminFinanceiro() {
   }, [rrts])
 
   const topClientes = useMemo(() => {
-    if (!rrts) return []
+    if (!rrts || !projetos) return []
     const m = new Map<string, number>()
-    rrts.forEach(r => {
-      if (['PAGO', 'NF_EMITIDA', 'DEFINITIVA'].includes(r.status)) {
-        m.set(r.companyName, (m.get(r.companyName) ?? 0) + r.valorCobradoCliente)
-      }
-    })
+    rrts
+      .filter(r => !r.billingPrincipalId)
+      .forEach(r => {
+        if (['PAGO', 'NF_EMITIDA', 'DEFINITIVA'].includes(r.status)) {
+          m.set(r.companyName, (m.get(r.companyName) ?? 0) + r.valorCobradoCliente)
+        }
+      })
+    projetos
+      .filter(p => !p.billingPrincipalId)
+      .forEach(p => {
+        if (['PAGO', 'ENTREGUE'].includes(p.status)) {
+          m.set(p.companyName, (m.get(p.companyName) ?? 0) + p.valor)
+        }
+      })
     return Array.from(m.entries())
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([cliente, total]) => ({ cliente, total: total / 100 }))
-  }, [rrts])
+  }, [rrts, projetos])
 
   async function handleExportCsv() {
     if (!rrts) return

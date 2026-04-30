@@ -92,6 +92,8 @@ export interface Endereco {
   cep: string
 }
 
+export type BillingRef = `rrt:${string}` | `projeto:${string}`
+
 export interface Projeto {
   id: string
   companyId: string
@@ -101,8 +103,11 @@ export interface Projeto {
   oc?: string
   empresaFaturamento: string
   cnpjFaturamento: string
-  valor: number // centavos
+  valor: number // centavos — quando billingConsolidates tem itens, deve refletir total real da NF
   status: ProjetoStatus
+  // Faturamento consolidado (v1.2)
+  billingPrincipalId?: BillingRef // se setado, este projeto NÃO soma no financeiro
+  billingConsolidates?: BillingRef[] // lista de itens cuja NF saiu deste projeto
   dataCriacao: Timestamp
   dataEntregaPrevista?: Timestamp
   dataEntrega?: Timestamp
@@ -156,6 +161,9 @@ export interface RRT {
   taxaCAU: number
   valorLiquido: number
   valorCobradoCliente: number // v1.1 — calculado, nunca aceito do client
+  // Faturamento consolidado (v1.2)
+  billingPrincipalId?: BillingRef
+  billingConsolidates?: BillingRef[]
   status: RRTStatus
   dataCriacao: Timestamp
   dataBoleto?: Timestamp

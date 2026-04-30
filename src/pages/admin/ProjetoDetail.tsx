@@ -9,6 +9,7 @@ import { ProjetoStatusPill } from '@/components/ui/StatusPill'
 import { StatusPipeline, PROJETO_PIPELINE } from '@/components/domain/StatusPipeline'
 import { FileUploader } from '@/components/domain/FileUploader'
 import { AnexosList } from '@/components/domain/AnexosList'
+import { BillingConsolidation } from '@/components/domain/BillingConsolidation'
 import {
   getProjeto,
   advanceProjetoStatus,
@@ -125,6 +126,16 @@ export default function AdminProjetoDetail() {
           <Field label="Data de pagamento" value={formatDate(projeto.dataPagamento)} />
         )}
       </div>
+
+      <BillingConsolidation
+        selfType="projeto"
+        selfId={projeto.id}
+        selfLabel={projeto.nome}
+        companyId={projeto.companyId}
+        billingConsolidates={projeto.billingConsolidates}
+        billingPrincipalId={projeto.billingPrincipalId}
+        onChange={() => void reload()}
+      />
 
       {projeto.descricao && (
         <Card>

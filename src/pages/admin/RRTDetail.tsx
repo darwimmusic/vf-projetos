@@ -9,6 +9,7 @@ import { RRTStatusPill } from '@/components/ui/StatusPill'
 import { StatusPipeline, RRT_PIPELINE } from '@/components/domain/StatusPipeline'
 import { FileUploader } from '@/components/domain/FileUploader'
 import { AnexosList } from '@/components/domain/AnexosList'
+import { BillingConsolidation } from '@/components/domain/BillingConsolidation'
 import {
   getRRT,
   advanceRRTStatus,
@@ -129,6 +130,16 @@ export default function AdminRRTDetail() {
         {rrt.dataNF && <Field label="NF emitida em" value={formatDate(rrt.dataNF)} />}
         {rrt.dataPagamento && <Field label="Pago em" value={formatDate(rrt.dataPagamento)} />}
       </div>
+
+      <BillingConsolidation
+        selfType="rrt"
+        selfId={rrt.id}
+        selfLabel={rrt.numeroRRT ?? rrt.descricao.slice(0, 40)}
+        companyId={rrt.companyId}
+        billingConsolidates={rrt.billingConsolidates}
+        billingPrincipalId={rrt.billingPrincipalId}
+        onChange={() => void reload()}
+      />
 
       {rrt.descricao && (
         <Card>

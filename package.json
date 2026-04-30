@@ -23,6 +23,9 @@
     "migrate": "dotenv -e .env.local -- tsx scripts/migrate-from-old-firestore.ts",
     "migrate:verify": "dotenv -e .env.local -- tsx scripts/verify-migration.ts",
     "set-role": "dotenv -e .env.local -- tsx scripts/set-user-role.ts",
+    "import:rrts-dvi": "dotenv -e .env.local -- tsx scripts/import-rrts-dvi.ts",
+    "import:backrooms-projeto": "dotenv -e .env.local -- tsx scripts/import-backrooms-projeto.ts",
+    "fix:backrooms-billing": "dotenv -e .env.local -- tsx scripts/fix-backrooms-billing.ts",
     "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage:rules",
     "deploy:functions": "firebase deploy --only functions",
     "secrets:scan": "tsx scripts/scan-secrets.ts"
