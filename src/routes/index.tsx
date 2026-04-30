@@ -37,6 +37,11 @@ const ClienteEntityDetail = lazy(() => import('@/pages/cliente/EntityDetail'))
 const ChamadoDetail = lazy(() => import('@/pages/ChamadoDetail'))
 const PublicLibPage = lazy(() => import('@/pages/PublicLib'))
 
+const AdminFinanceiro = lazy(() => import('@/pages/admin/Financeiro'))
+const AdminRelatorios = lazy(() => import('@/pages/admin/Relatorios'))
+const ClienteTime = lazy(() => import('@/pages/cliente/Time'))
+const ClienteRelatorios = lazy(() => import('@/pages/cliente/Relatorios'))
+
 function PageFallback() {
   return (
     <div className="grid min-h-[40vh] place-items-center text-sm text-muted">carregando…</div>
@@ -76,6 +81,8 @@ export const router = createBrowserRouter([
           { path: '/admin/kanban', element: <S><AdminKanban /></S> },
           { path: '/admin/calendario', element: <S><AdminCalendario /></S> },
           { path: '/admin/public-lib', element: <S><AdminPublicLib /></S> },
+          { path: '/admin/financeiro', element: <S><AdminFinanceiro /></S> },
+          { path: '/admin/relatorios', element: <S><AdminRelatorios /></S> },
           { path: '/admin/audit', element: <S><AdminAuditLog /></S> },
           { path: '/admin/config', element: <S><AdminConfig /></S> },
         ],
@@ -98,6 +105,8 @@ export const router = createBrowserRouter([
           { path: '/c/chamados/novo', element: <S><ClienteNovoChamado /></S> },
           { path: '/c/chamados/:id', element: <S><ChamadoDetail isAdminView={false} /></S> },
           { path: '/c/calendario', element: <S><ClienteCalendario /></S> },
+          { path: '/c/time', element: <S><ClienteTime /></S> },
+          { path: '/c/relatorios', element: <S><ClienteRelatorios /></S> },
         ],
       },
     ],

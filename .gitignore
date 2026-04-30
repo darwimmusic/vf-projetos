@@ -80,3 +80,5 @@ functions/.runtimeconfig.json
 
 .vercel
 _trash_vercel_*
+
+.vercel

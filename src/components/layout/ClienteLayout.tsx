@@ -10,7 +10,10 @@ const NAV = [
   { to: '/c', label: 'Início', end: true },
   { to: '/c/projetos', label: 'Projetos' },
   { to: '/c/rrts', label: 'RRTs' },
-  { to: '/c/chamados', label: 'Chamados', wave: 2 },
+  { to: '/c/chamados', label: 'Chamados' },
+  { to: '/c/calendario', label: 'Agenda' },
+  { to: '/c/relatorios', label: 'Relatórios' },
+  { to: '/c/time', label: 'Time' },
 ] as const
 
 export function ClienteLayout() {
@@ -44,9 +47,6 @@ export function ClienteLayout() {
                 }
               >
                 {item.label}
-                {'wave' in item && item.wave === 2 && (
-                  <span className="ml-1 text-[9px] uppercase text-warning">·W2</span>
-                )}
               </NavLink>
             ))}
           </nav>

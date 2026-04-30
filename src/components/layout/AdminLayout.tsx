@@ -25,12 +25,12 @@ const NAV = [
   { to: '/admin/clientes', icon: Building2, label: 'Clientes' },
   { to: '/admin/projetos', icon: FolderKanban, label: 'Projetos' },
   { to: '/admin/rrts', icon: FileSignature, label: 'RRTs' },
-  { to: '/admin/chamados', icon: Ticket, label: 'Chamados', wave: 2 },
-  { to: '/admin/kanban', icon: KanbanSquare, label: 'Kanban', wave: 2 },
-  { to: '/admin/calendario', icon: Calendar, label: 'Calendário', wave: 2 },
-  { to: '/admin/financeiro', icon: Coins, label: 'Financeiro', wave: 3 },
-  { to: '/admin/relatorios', icon: BarChart3, label: 'Relatórios', wave: 3 },
-  { to: '/admin/public-lib', icon: Library, label: 'Biblioteca', wave: 2 },
+  { to: '/admin/chamados', icon: Ticket, label: 'Chamados' },
+  { to: '/admin/kanban', icon: KanbanSquare, label: 'Kanban' },
+  { to: '/admin/calendario', icon: Calendar, label: 'Calendário' },
+  { to: '/admin/financeiro', icon: Coins, label: 'Financeiro' },
+  { to: '/admin/relatorios', icon: BarChart3, label: 'Relatórios' },
+  { to: '/admin/public-lib', icon: Library, label: 'Biblioteca' },
   { to: '/admin/audit', icon: ScrollText, label: 'Auditoria' },
   { to: '/admin/config', icon: Settings, label: 'Configurações' },
 ] as const
@@ -54,7 +54,6 @@ export function AdminLayout() {
         <nav className="flex-1 overflow-y-auto px-3">
           {NAV.map(item => {
             const Icon = item.icon
-            const wave = 'wave' in item ? item.wave : undefined
             return (
               <NavLink
                 key={item.to}
@@ -71,11 +70,6 @@ export function AdminLayout() {
               >
                 <Icon size={16} />
                 <span className="flex-1">{item.label}</span>
-                {wave && (
-                  <span className="rounded bg-warning/20 px-1.5 py-0.5 text-[9px] font-bold uppercase text-warning">
-                    W{wave}
-                  </span>
-                )}
               </NavLink>
             )
           })}
