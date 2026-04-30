@@ -1,0 +1,165 @@
+rules_version = '2';
+
+// Gerado de docs/schemas/security-rules.md v1.1 — drift = bug.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── HELPERS ───────────────────────────────────────────────────
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+    function userRole() { return request.auth.token.role; }
+    function userCompanyId() { return request.auth.token.companyId; }
+    function userUid() { return request.auth.uid; }
+    function isOwnerOf(companyId) {
+      return isSignedIn()
+        && userRole() == 'company_owner'
+        && userCompanyId() == companyId;
+    }
+    function isMemberOf(companyId) {
+      return isSignedIn()
+        && userCompanyId() == companyId
+        && (userRole() == 'company_owner' || userRole() == 'company_member');
+    }
+    function isAuthorOf(authorUid) {
+      return userUid() == authorUid;
+    }
+
+    // ─── companies ─────────────────────────────────────────────────
+    match /companies/{companyId} {
+      allow read:   if isAdmin() || isMemberOf(companyId);
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+                       || (isOwnerOf(companyId)
+                           && request.resource.data.diff(resource.data).affectedKeys()
+                              .hasOnly(['name','logoUrl','contactEmail','updatedAt']));
+      allow delete: if isAdmin();
+    }
+
+    // ─── users ─────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read:   if isAdmin()
+                       || userUid() == uid
+                       || (userRole() == 'company_owner' && userCompanyId() == resource.data.companyId);
+      allow create: if isAdmin()
+                       || (isOwnerOf(request.resource.data.companyId)
+                           && request.resource.data.role == 'company_member');
+      allow update: if isAdmin()
+                       || (userUid() == uid
+                           && request.resource.data.diff(resource.data).affectedKeys()
+                              .hasOnly(['displayName','avatarUrl','emailNotifications','lastLogin']))
+                       || (isOwnerOf(resource.data.companyId)
+                           && request.resource.data.diff(resource.data).affectedKeys()
+                              .hasOnly(['active','displayName']));
+      allow delete: if isAdmin()
+                       || (isOwnerOf(resource.data.companyId)
+                           && resource.data.role == 'company_member');
+    }
+
+    // ─── usernames (lookup público — v1.1 B2 fix) ──────────────────
+    match /usernames/{usernameKey} {
+      allow read:   if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+                       && request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['email','authMethod','active','updatedAt']);
+      allow delete: if isAdmin();
+    }
+
+    // ─── projetos ──────────────────────────────────────────────────
+    match /projetos/{projetoId} {
+      allow read:   if isAdmin() || isMemberOf(resource.data.companyId);
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+                       || (isMemberOf(resource.data.companyId)
+                           && request.resource.data.diff(resource.data).affectedKeys()
+                              .hasOnly(['paymentAlertedAt','paymentAlertedBy','updatedAt']));
+
+      match /anexos/{anexoId} {
+        allow read:   if isAdmin() || isMemberOf(get(/databases/$(database)/documents/projetos/$(projetoId)).data.companyId);
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    // ─── rrts ──────────────────────────────────────────────────────
+    match /rrts/{rrtId} {
+      allow read:   if isAdmin() || isMemberOf(resource.data.companyId);
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+                       || (isMemberOf(resource.data.companyId)
+                           && request.resource.data.diff(resource.data).affectedKeys()
+                              .hasOnly(['paymentAlertedAt','paymentAlertedBy','boletoAlertedAt','boletoAlertedBy','updatedAt']));
+
+      match /anexos/{anexoId} {
+        allow read:   if isAdmin() || isMemberOf(get(/databases/$(database)/documents/rrts/$(rrtId)).data.companyId);
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    // ─── chamados (W2 ativa fluxo completo) ────────────────────────
+    match /chamados/{chamadoId} {
+      allow read:   if isAdmin() || isMemberOf(resource.data.companyId);
+      allow create: if isAdmin()
+                       || (isMemberOf(request.resource.data.companyId)
+                           && request.resource.data.openedBy == userUid());
+      allow update: if isAdmin()
+                       || (isMemberOf(resource.data.companyId)
+                           && request.resource.data.diff(resource.data).affectedKeys()
+                              .hasOnly(['ultimaInteracao','qtdMensagens','qtdAnexos']));
+      allow delete: if isAdmin();
+
+      match /mensagens/{msgId} {
+        allow read:   if isAdmin() || isMemberOf(get(/databases/$(database)/documents/chamados/$(chamadoId)).data.companyId);
+        allow create: if isAdmin() || isMemberOf(get(/databases/$(database)/documents/chamados/$(chamadoId)).data.companyId);
+        allow update: if (isAdmin() || isAuthorOf(resource.data.authorId))
+                         && request.resource.data.diff(resource.data).affectedKeys()
+                            .hasOnly(['text','edited','editedAt']);
+        allow delete: if isAdmin();
+      }
+
+      match /anexos/{anexoId} {
+        allow read:   if isAdmin() || isMemberOf(get(/databases/$(database)/documents/chamados/$(chamadoId)).data.companyId);
+        allow create: if isAdmin() || isMemberOf(get(/databases/$(database)/documents/chamados/$(chamadoId)).data.companyId);
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // ─── audit_logs (append-only + anti-forgery v1.1) ──────────────
+    match /audit_logs/{logId} {
+      allow read:   if isAdmin();
+      allow create: if isSignedIn()
+                       && request.resource.data.actor.uid == userUid()
+                       && request.resource.data.actor.role == userRole()
+                       && (request.resource.data.actor.companyId == userCompanyId()
+                           || (request.resource.data.actor.companyId == null && userCompanyId() == null));
+      allow update, delete: if false;
+    }
+
+    // ─── notificacoes (member pode notificar admin — v1.1 M9 fix) ─
+    match /notificacoes/{notifId} {
+      allow read:   if isAdmin() || resource.data.recipientUid == userUid();
+      allow create: if isAdmin()
+                       || (isSignedIn()
+                           && request.resource.data.recipientRole == 'admin'
+                           && request.resource.data.type in ['payment_alert','ticket_replied','ticket_opened']
+                           && request.resource.data.read == false);
+      allow update: if (resource.data.recipientUid == userUid())
+                       && request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['read','readAt']);
+      allow delete: if isAdmin();
+    }
+
+    // ─── public_lib ────────────────────────────────────────────────
+    match /public_lib/{itemId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── config ────────────────────────────────────────────────────
+    match /config/{docId} {
+      allow read:   if isSignedIn();
+      allow write:  if isAdmin();
+    }
+  }
+}

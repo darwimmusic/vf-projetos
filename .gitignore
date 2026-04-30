@@ -1,0 +1,82 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+.pnpm-store
+functions/node_modules
+
+# Build outputs
+dist
+dist-ssr
+build
+*.local
+.vite
+.turbo
+*.tsbuildinfo
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Thumbs.db
+
+# ─────────────────────────────────────────────────────────────
+# SECRETS — NEVER COMMIT (verificado em pre-commit hook)
+# ─────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# Firebase service accounts
+service-account*.json
+firebase-adminsdk*.json
+*-firebase-adminsdk-*.json
+.firebase/
+.firebaserc.local
+
+# Firebase emulator state
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+storage-debug.log
+firebase-export-*
+
+# Vercel
+.vercel
+
+# Backups locais (migrations rodadas localmente)
+migration-backup-*.json
+migration-report-*.md
+
+# Coverage e test artifacts
+coverage
+*.lcov
+.nyc_output
+
+# OS-specific
+Desktop.ini
+$RECYCLE.BIN/
+
+# Functions deploy artifacts
+functions/lib
+functions/.runtimeconfig.json
+
+.vercel
+.env*.local
+
+.vercel
+_trash_vercel_*

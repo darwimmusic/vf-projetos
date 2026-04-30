@@ -1,0 +1,69 @@
+rules_version = '2';
+
+// Gerado de docs/schemas/security-rules.md v1.1.
+// Cross-service Firestore reads exigem opt-in moderno — pré-flight
+// scripts/check-cross-service.ts valida no W1 Bloco 0; fallback path-based em D-001.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return isSignedIn() && request.auth.token.role == 'admin'; }
+    function userCompanyId() { return request.auth.token.companyId; }
+    function isMemberOfCompany(cid) {
+      return isSignedIn() && userCompanyId() == cid;
+    }
+    function validSize(maxMB) { return request.resource.size < maxMB * 1024 * 1024; }
+    function validImageMime() {
+      return request.resource.contentType.matches('image/(png|jpeg|webp|svg\\+xml)');
+    }
+    function validDocMime() {
+      return request.resource.contentType == 'application/pdf'
+        || request.resource.contentType.matches('image/(png|jpeg|webp)');
+    }
+
+    match /companies/{companyId}/logo/{filename} {
+      allow read:  if isAdmin() || isMemberOfCompany(companyId);
+      allow write: if (isAdmin() || isMemberOfCompany(companyId))
+                      && validImageMime() && validSize(2);
+    }
+
+    match /users/{uid}/avatar/{filename} {
+      allow read:  if isSignedIn();
+      allow write: if (isAdmin() || request.auth.uid == uid)
+                      && validImageMime() && validSize(2);
+    }
+
+    match /projetos/{projetoId}/{category}/{filename} {
+      allow read: if isAdmin()
+                     || (isSignedIn()
+                         && firestore.exists(/databases/(default)/documents/projetos/$(projetoId))
+                         && userCompanyId() == firestore.get(/databases/(default)/documents/projetos/$(projetoId)).data.companyId);
+      allow write: if isAdmin() && validDocMime() && validSize(50);
+    }
+
+    match /rrts/{rrtId}/{category}/{filename} {
+      allow read: if isAdmin()
+                     || (isSignedIn()
+                         && firestore.exists(/databases/(default)/documents/rrts/$(rrtId))
+                         && userCompanyId() == firestore.get(/databases/(default)/documents/rrts/$(rrtId)).data.companyId);
+      allow write: if isAdmin() && validDocMime() && validSize(20);
+    }
+
+    match /chamados/{chamadoId}/uploads/{filename} {
+      allow read: if isAdmin()
+                     || (isSignedIn()
+                         && firestore.exists(/databases/(default)/documents/chamados/$(chamadoId))
+                         && userCompanyId() == firestore.get(/databases/(default)/documents/chamados/$(chamadoId)).data.companyId);
+      allow write: if (isAdmin()
+                       || (isSignedIn()
+                           && firestore.exists(/databases/(default)/documents/chamados/$(chamadoId))
+                           && userCompanyId() == firestore.get(/databases/(default)/documents/chamados/$(chamadoId)).data.companyId))
+                      && validDocMime() && validSize(50);
+    }
+
+    match /public_lib/{category}/{filename} {
+      allow read:  if true;
+      allow write: if isAdmin() && validDocMime() && validSize(20);
+    }
+  }
+}
