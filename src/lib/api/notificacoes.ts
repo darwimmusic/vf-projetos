@@ -3,7 +3,6 @@ import {
   collection,
   doc,
   getDocs,
-  orderBy,
   query,
   serverTimestamp,
   updateDoc,
@@ -15,21 +14,15 @@ import type { Notificacao, NotificacaoType, Role } from '@/types'
 const COL = 'notificacoes'
 
 export async function listMyNotifications(uid: string, unreadOnly = false): Promise<Notificacao[]> {
-  let q = query(
-    collection(db, COL),
-    where('recipientUid', '==', uid),
-    orderBy('createdAt', 'desc'),
-  )
-  if (unreadOnly) {
-    q = query(
-      collection(db, COL),
-      where('recipientUid', '==', uid),
-      where('read', '==', false),
-      orderBy('createdAt', 'desc'),
-    )
-  }
+  const q = query(collection(db, COL), where('recipientUid', '==', uid))
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Notificacao)
+  let list = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Notificacao)
+  if (unreadOnly) list = list.filter(n => !n.read)
+  return list.sort((a, b) => {
+    const at = a.createdAt?.toMillis?.() ?? 0
+    const bt = b.createdAt?.toMillis?.() ?? 0
+    return bt - at
+  })
 }
 
 export async function createNotification(params: {

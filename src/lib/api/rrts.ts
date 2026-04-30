@@ -29,23 +29,27 @@ export async function listRRTs(filters?: {
   companyId?: string
   status?: RRTStatus
 }): Promise<RRT[]> {
-  let q = query(collection(db, COL), orderBy('dataCriacao', 'desc'))
+  // Estratégia: where simples (1 campo) + sort client-side.
+  // Volume baixo (<500/ano), não justifica índices compostos pra todas combinações.
+  let q
   if (filters?.companyId) {
-    q = query(
-      collection(db, COL),
-      where('companyId', '==', filters.companyId),
-      orderBy('dataCriacao', 'desc'),
-    )
-  }
-  if (filters?.status) {
-    q = query(
-      collection(db, COL),
-      where('status', '==', filters.status),
-      orderBy('dataCriacao', 'desc'),
-    )
+    q = query(collection(db, COL), where('companyId', '==', filters.companyId))
+  } else if (filters?.status) {
+    q = query(collection(db, COL), where('status', '==', filters.status))
+  } else {
+    q = query(collection(db, COL), orderBy('dataCriacao', 'desc'))
   }
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as RRT)
+  let list = snap.docs.map(d => ({ id: d.id, ...d.data() }) as RRT)
+  if (filters?.status && filters.companyId) {
+    list = list.filter(r => r.status === filters.status)
+  }
+  // sort client-side por dataCriacao desc
+  return list.sort((a, b) => {
+    const at = a.dataCriacao?.toMillis?.() ?? 0
+    const bt = b.dataCriacao?.toMillis?.() ?? 0
+    return bt - at
+  })
 }
 
 export async function getRRT(id: string): Promise<RRT | null> {

@@ -25,23 +25,24 @@ export async function listProjetos(filters?: {
   companyId?: string
   status?: ProjetoStatus
 }): Promise<Projeto[]> {
-  let q = query(collection(db, COL), orderBy('dataCriacao', 'desc'))
+  let q
   if (filters?.companyId) {
-    q = query(
-      collection(db, COL),
-      where('companyId', '==', filters.companyId),
-      orderBy('dataCriacao', 'desc'),
-    )
-  }
-  if (filters?.status) {
-    q = query(
-      collection(db, COL),
-      where('status', '==', filters.status),
-      orderBy('dataCriacao', 'desc'),
-    )
+    q = query(collection(db, COL), where('companyId', '==', filters.companyId))
+  } else if (filters?.status) {
+    q = query(collection(db, COL), where('status', '==', filters.status))
+  } else {
+    q = query(collection(db, COL), orderBy('dataCriacao', 'desc'))
   }
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Projeto)
+  let list = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Projeto)
+  if (filters?.status && filters.companyId) {
+    list = list.filter(p => p.status === filters.status)
+  }
+  return list.sort((a, b) => {
+    const at = a.dataCriacao?.toMillis?.() ?? 0
+    const bt = b.dataCriacao?.toMillis?.() ?? 0
+    return bt - at
+  })
 }
 
 export async function getProjeto(id: string): Promise<Projeto | null> {

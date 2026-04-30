@@ -1,6 +1,38 @@
 {
   "indexes": [
     {
+      "collectionGroup": "companies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "active", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "displayName", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "projetos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "dataCriacao", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "projetos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "dataCriacao", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "projetos",
       "queryScope": "COLLECTION",
       "fields": [
@@ -10,11 +42,19 @@
       ]
     },
     {
-      "collectionGroup": "projetos",
+      "collectionGroup": "rrts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "dataCriacao", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rrts",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "dataEntregaPrevista", "order": "ASCENDING" }
+        { "fieldPath": "dataCriacao", "order": "DESCENDING" }
       ]
     },
     {
@@ -24,14 +64,6 @@
         { "fieldPath": "companyId", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "dataCriacao", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "rrts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "vencimentoBoleto", "order": "ASCENDING" }
       ]
     },
     {
@@ -39,6 +71,13 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "ultimaInteracao", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "chamados",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "ultimaInteracao", "order": "DESCENDING" }
       ]
@@ -47,7 +86,7 @@
       "collectionGroup": "chamados",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "assignedTo", "order": "ASCENDING" },
+        { "fieldPath": "companyId", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "ultimaInteracao", "order": "DESCENDING" }
       ]
@@ -74,8 +113,24 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "recipientUid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notificacoes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "recipientUid", "order": "ASCENDING" },
         { "fieldPath": "read", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "public_lib",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "active", "order": "ASCENDING" },
+        { "fieldPath": "uploadedAt", "order": "DESCENDING" }
       ]
     }
   ],

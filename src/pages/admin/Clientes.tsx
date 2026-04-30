@@ -13,7 +13,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { listCompanies, createCompany } from '@/lib/api/companies'
 import { companySchema, type CompanyInput } from '@/lib/validations'
-import { formatCnpj } from '@/lib/format'
+import { formatCnpj, slugify } from '@/lib/format'
 import { toast } from '@/components/ui/Toast'
 import type { Company } from '@/types'
 
@@ -129,14 +129,30 @@ function NewCompanyModal({
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    setValue,
+    watch,
   } = useForm<CompanyInput>({
     resolver: zodResolver(companySchema),
     defaultValues: { prazoNF: 10 },
   })
 
+  const nameValue = watch('name')
+  const slugValue = watch('slug')
+
+  // Auto-preenche slug a partir do nome se usuário não tocou no slug ainda
+  useEffect(() => {
+    if (!nameValue) return
+    const auto = slugify(nameValue).slice(0, 40)
+    if (!slugValue || slugValue === slugify(slugValue)) {
+      setValue('slug', auto, { shouldValidate: false })
+    }
+  }, [nameValue, slugValue, setValue])
+
   async function onSubmit(data: CompanyInput) {
     try {
-      await createCompany(data)
+      // garante slug normalizado mesmo se usuário escreveu manual
+      const payload = { ...data, slug: slugify(data.slug) }
+      await createCompany(payload)
       toast.success('Empresa criada', `${data.name} foi adicionada.`)
       reset()
       onOpenChange(false)

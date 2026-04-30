@@ -20,11 +20,12 @@ import type { CompanyInput } from '../validations'
 const COL = 'companies'
 
 export async function listCompanies(activeOnly = true): Promise<Company[]> {
-  const q = activeOnly
-    ? query(collection(db, COL), where('active', '==', true), orderBy('name'))
-    : query(collection(db, COL), orderBy('name'))
+  // Sem composite index — busca tudo orderBy name, filtra client-side.
+  // Volume baixo (<100 empresas) torna isso aceitável.
+  const q = query(collection(db, COL), orderBy('name'))
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Company)
+  const all = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Company)
+  return activeOnly ? all.filter(c => c.active !== false) : all
 }
 
 export async function getCompany(id: string): Promise<Company | null> {

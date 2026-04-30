@@ -3,7 +3,6 @@ import {
   collection,
   limit,
   onSnapshot,
-  orderBy,
   query,
   where,
   type Unsubscribe,
@@ -29,16 +28,23 @@ export const useNotifStore = create<NotifState>((set, get) => ({
 
   start(uid) {
     get().stop()
+    // sort client-side pra evitar índice composto recipientUid+createdAt
     const q = query(
       collection(db, 'notificacoes'),
       where('recipientUid', '==', uid),
-      orderBy('createdAt', 'desc'),
-      limit(20),
+      limit(50),
     )
     const unsub = onSnapshot(
       q,
       snap => {
-        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Notificacao)
+        const list = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }) as Notificacao)
+          .sort((a, b) => {
+            const at = a.createdAt?.toMillis?.() ?? 0
+            const bt = b.createdAt?.toMillis?.() ?? 0
+            return bt - at
+          })
+          .slice(0, 20)
         set({ list, unreadCount: list.filter(n => !n.read).length })
       },
       err => {

@@ -23,10 +23,15 @@ export async function getUser(uid: string): Promise<User | null> {
 }
 
 export async function listUsers(filters?: { companyId?: string }): Promise<User[]> {
-  let q = query(collection(db, COL), orderBy('displayName'))
   if (filters?.companyId) {
-    q = query(collection(db, COL), where('companyId', '==', filters.companyId), orderBy('displayName'))
+    // where + sort client-side
+    const q = query(collection(db, COL), where('companyId', '==', filters.companyId))
+    const snap = await getDocs(q)
+    return snap.docs
+      .map(d => ({ uid: d.id, ...d.data() }) as User)
+      .sort((a, b) => (a.displayName ?? '').localeCompare(b.displayName ?? ''))
   }
+  const q = query(collection(db, COL), orderBy('displayName'))
   const snap = await getDocs(q)
   return snap.docs.map(d => ({ uid: d.id, ...d.data() }) as User)
 }
