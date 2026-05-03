@@ -11,8 +11,9 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
-import { listCompanies, createCompany } from '@/lib/api/companies'
-import { companySchema, type CompanyInput } from '@/lib/validations'
+import { listCompanies, createCompanyWithOwner } from '@/lib/api/companies'
+import { companySchema } from '@/lib/validations'
+import { z } from 'zod'
 import { formatCnpj, slugify } from '@/lib/format'
 import { toast } from '@/components/ui/Toast'
 import type { Company } from '@/types'
@@ -115,6 +116,11 @@ export default function AdminClientes() {
   )
 }
 
+const newCompanySchema = companySchema.extend({
+  ownerPassword: z.string().min(6, 'mínimo 6 caracteres'),
+})
+type NewCompanyForm = z.infer<typeof newCompanySchema>
+
 function NewCompanyModal({
   open,
   onOpenChange,
@@ -131,15 +137,14 @@ function NewCompanyModal({
     reset,
     setValue,
     watch,
-  } = useForm<CompanyInput>({
-    resolver: zodResolver(companySchema),
+  } = useForm<NewCompanyForm>({
+    resolver: zodResolver(newCompanySchema),
     defaultValues: { prazoNF: 10 },
   })
 
   const nameValue = watch('name')
   const slugValue = watch('slug')
 
-  // Auto-preenche slug a partir do nome se usuário não tocou no slug ainda
   useEffect(() => {
     if (!nameValue) return
     const auto = slugify(nameValue).slice(0, 40)
@@ -148,12 +153,19 @@ function NewCompanyModal({
     }
   }, [nameValue, slugValue, setValue])
 
-  async function onSubmit(data: CompanyInput) {
+  async function onSubmit(data: NewCompanyForm) {
     try {
-      // garante slug normalizado mesmo se usuário escreveu manual
-      const payload = { ...data, slug: slugify(data.slug) }
-      await createCompany(payload)
-      toast.success('Empresa criada', `${data.name} foi adicionada.`)
+      const { ownerPassword, ...companyInput } = data
+      const payload = { ...companyInput, slug: slugify(companyInput.slug) }
+      await createCompanyWithOwner({
+        ...payload,
+        ownerPassword,
+        ownerDisplayName: payload.name,
+      })
+      toast.success(
+        'Empresa criada',
+        `Login do cliente: ${payload.slug} (senha definida).`,
+      )
       reset()
       onOpenChange(false)
       onCreated()
@@ -167,7 +179,7 @@ function NewCompanyModal({
       open={open}
       onOpenChange={onOpenChange}
       title="Nova empresa"
-      description="Cadastre um cliente. Você pode convidar usuários depois."
+      description="Cria a empresa e o usuário owner. O cliente loga com o slug + senha definida aqui."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <Input
@@ -178,11 +190,11 @@ function NewCompanyModal({
         />
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Slug"
-            placeholder="dvi"
+            label="Slug (= username)"
+            placeholder="dvi-producoes"
             {...register('slug')}
             error={errors.slug?.message}
-            helperText="Usado em login (ex: dvi.joao)"
+            helperText="Cliente loga com este slug"
           />
           <Input
             label="CNPJ"
@@ -198,12 +210,23 @@ function NewCompanyModal({
           {...register('contactEmail')}
           error={errors.contactEmail?.message}
         />
-        <Input
-          label="Prazo NF (dias)"
-          type="number"
-          {...register('prazoNF', { valueAsNumber: true })}
-          error={errors.prazoNF?.message}
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="Senha do owner"
+            type="password"
+            placeholder="mínimo 6 caracteres"
+            autoComplete="new-password"
+            {...register('ownerPassword')}
+            error={errors.ownerPassword?.message}
+            helperText="Anota — você é quem repassa pro cliente"
+          />
+          <Input
+            label="Prazo NF (dias)"
+            type="number"
+            {...register('prazoNF', { valueAsNumber: true })}
+            error={errors.prazoNF?.message}
+          />
+        </div>
         <div className="mt-2 flex justify-end gap-3">
           <Button variant="ghost" type="button" onClick={() => onOpenChange(false)}>
             Cancelar

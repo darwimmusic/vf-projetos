@@ -14,10 +14,16 @@ import {
 import { db } from '../firebase'
 import { withAudit } from '../audit'
 import { normalizeCnpj } from '../format'
+import { apiCreateUser } from './admin-api'
 import type { Company } from '@/types'
 import type { CompanyInput } from '../validations'
 
 const COL = 'companies'
+
+export interface CreateCompanyWithOwnerInput extends CompanyInput {
+  ownerPassword: string
+  ownerDisplayName?: string
+}
 
 export async function listCompanies(activeOnly = true): Promise<Company[]> {
   // Sem composite index — busca tudo orderBy name, filtra client-side.
@@ -55,6 +61,26 @@ export async function createCompany(input: CompanyInput, ownerId = ''): Promise<
       }),
   )
   return ref.id
+}
+
+/**
+ * Cria empresa + owner em sequência. Username do owner = slug.
+ * Se a criação do owner falhar, a empresa ainda existe — admin pode tentar de novo
+ * pela tela de detalhes.
+ */
+export async function createCompanyWithOwner(
+  input: CreateCompanyWithOwnerInput,
+): Promise<{ companyId: string; ownerUid: string }> {
+  const { ownerPassword, ownerDisplayName, ...companyInput } = input
+  const companyId = await createCompany(companyInput)
+  const result = await apiCreateUser({
+    mode: 'owner',
+    username: companyInput.slug,
+    password: ownerPassword,
+    displayName: ownerDisplayName ?? companyInput.name,
+    companyId,
+  })
+  return { companyId, ownerUid: result.uid }
 }
 
 export async function updateCompany(id: string, patch: Partial<CompanyInput>): Promise<void> {

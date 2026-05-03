@@ -19,12 +19,12 @@ import type { User } from '@/types'
 
 const inviteSchema = z.object({
   displayName: z.string().min(2).max(120),
-  email: z.string().email(),
   tag: z
     .string()
     .min(2)
     .max(40)
     .regex(/^[a-z0-9-]+$/, 'apenas minúsculas, números e hífen'),
+  password: z.string().min(6, 'mínimo 6 caracteres'),
 })
 type InviteForm = z.infer<typeof inviteSchema>
 
@@ -158,7 +158,7 @@ function InviteModal({
   async function onSubmit(data: InviteForm) {
     try {
       await inviteMember({ ...data, companyId })
-      toast.success('Convite enviado', `${data.displayName} pode logar com magic link.`)
+      toast.success('Membro criado', `${data.displayName} já pode logar com username + senha.`)
       reset()
       onOpenChange(false)
       onInvited()
@@ -172,7 +172,7 @@ function InviteModal({
       open={open}
       onOpenChange={onOpenChange}
       title="Adicionar membro"
-      description="Cria entrada na lista de usernames. Pessoa loga com o email + magic link."
+      description="Cria um sub-usuário com username e senha. Você repassa pra pessoa."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <Input
@@ -182,18 +182,20 @@ function InviteModal({
           error={errors.displayName?.message}
         />
         <Input
-          label="Email"
-          type="email"
-          placeholder="joao@empresa.com.br"
-          {...register('email')}
-          error={errors.email?.message}
-        />
-        <Input
           label="Tag (parte do username)"
           placeholder="joao"
           {...register('tag')}
           error={errors.tag?.message}
-          helperText="Login será {empresa}.{tag} — ex: dvi.joao"
+          helperText="Login será {slug-da-empresa}.{tag}"
+        />
+        <Input
+          label="Senha"
+          type="password"
+          autoComplete="new-password"
+          placeholder="mínimo 6 caracteres"
+          {...register('password')}
+          error={errors.password?.message}
+          helperText="Anota — você é quem repassa pra pessoa"
         />
         <div className="mt-2 flex justify-end gap-3">
           <Button variant="ghost" type="button" onClick={() => onOpenChange(false)}>
