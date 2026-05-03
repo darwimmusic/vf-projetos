@@ -24,10 +24,12 @@ function getApp(): App {
   const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
   if (!json) throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON ausente')
   const sa = JSON.parse(json)
+  // Trim defensivo: vercel env CLI às vezes adiciona \n no fim do valor.
+  const projectId = (process.env.FIREBASE_PROJECT_ID ?? sa.project_id).trim()
   return initializeApp(
     {
       credential: cert(sa),
-      projectId: process.env.FIREBASE_PROJECT_ID ?? sa.project_id,
+      projectId,
     },
     'admin-api',
   )
@@ -62,8 +64,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let caller
   try {
     caller = await auth.verifyIdToken(token)
-  } catch {
-    return res.status(401).json({ error: 'Invalid token' })
+  } catch (e) {
+    console.error('[create-user] verifyIdToken failed', {
+      message: (e as Error).message,
+      tokenLen: token.length,
+    })
+    return res.status(401).json({ error: 'Invalid token', detail: (e as Error).message })
   }
 
   // 2. Body
