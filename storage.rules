@@ -33,9 +33,14 @@ service firebase.storage {
                       && validImageMime() && validSize(2);
     }
 
+    // Categoria 'INTERNO' nunca é exposta a member/owner — só admin.
+    // Para outras categorias, validamos que o usuário pertence à empresa do projeto.
+    // (Storage não consegue ler `visibleToClient` do doc de anexo, então usamos
+    // convenção de path: arquivos privados sobem em category='INTERNO'.)
     match /projetos/{projetoId}/{category}/{filename} {
       allow read: if isAdmin()
-                     || (isSignedIn()
+                     || (category != 'INTERNO'
+                         && isSignedIn()
                          && firestore.exists(/databases/(default)/documents/projetos/$(projetoId))
                          && userCompanyId() == firestore.get(/databases/(default)/documents/projetos/$(projetoId)).data.companyId);
       allow write: if isAdmin() && validDocMime() && validSize(50);
@@ -43,7 +48,8 @@ service firebase.storage {
 
     match /rrts/{rrtId}/{category}/{filename} {
       allow read: if isAdmin()
-                     || (isSignedIn()
+                     || (category != 'INTERNO'
+                         && isSignedIn()
                          && firestore.exists(/databases/(default)/documents/rrts/$(rrtId))
                          && userCompanyId() == firestore.get(/databases/(default)/documents/rrts/$(rrtId)).data.companyId);
       allow write: if isAdmin() && validDocMime() && validSize(20);

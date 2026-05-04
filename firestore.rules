@@ -39,9 +39,11 @@ service cloud.firestore {
 
     // ─── users ─────────────────────────────────────────────────────
     match /users/{uid} {
+      // Member pode ler outros membros da mesma empresa (lista do time);
+      // self-read sempre permitido.
       allow read:   if isAdmin()
                        || userUid() == uid
-                       || (userRole() == 'company_owner' && userCompanyId() == resource.data.companyId);
+                       || isMemberOf(resource.data.companyId);
       allow create: if isAdmin()
                        || (isOwnerOf(request.resource.data.companyId)
                            && request.resource.data.role == 'company_member');
@@ -71,13 +73,17 @@ service cloud.firestore {
     match /projetos/{projetoId} {
       allow read:   if isAdmin() || isMemberOf(resource.data.companyId);
       allow create, delete: if isAdmin();
+      // "Alertar pagamento" restrito ao owner da empresa.
       allow update: if isAdmin()
-                       || (isMemberOf(resource.data.companyId)
+                       || (isOwnerOf(resource.data.companyId)
                            && request.resource.data.diff(resource.data).affectedKeys()
                               .hasOnly(['paymentAlertedAt','paymentAlertedBy','updatedAt']));
 
       match /anexos/{anexoId} {
-        allow read:   if isAdmin() || isMemberOf(get(/databases/$(database)/documents/projetos/$(projetoId)).data.companyId);
+        // Anexos com visibleToClient == false só admin lê (ex: notas internas).
+        allow read:   if isAdmin()
+                         || (isMemberOf(get(/databases/$(database)/documents/projetos/$(projetoId)).data.companyId)
+                             && resource.data.visibleToClient == true);
         allow create, update, delete: if isAdmin();
       }
     }
@@ -87,12 +93,14 @@ service cloud.firestore {
       allow read:   if isAdmin() || isMemberOf(resource.data.companyId);
       allow create, delete: if isAdmin();
       allow update: if isAdmin()
-                       || (isMemberOf(resource.data.companyId)
+                       || (isOwnerOf(resource.data.companyId)
                            && request.resource.data.diff(resource.data).affectedKeys()
                               .hasOnly(['paymentAlertedAt','paymentAlertedBy','boletoAlertedAt','boletoAlertedBy','updatedAt']));
 
       match /anexos/{anexoId} {
-        allow read:   if isAdmin() || isMemberOf(get(/databases/$(database)/documents/rrts/$(rrtId)).data.companyId);
+        allow read:   if isAdmin()
+                         || (isMemberOf(get(/databases/$(database)/documents/rrts/$(rrtId)).data.companyId)
+                             && resource.data.visibleToClient == true);
         allow create, update, delete: if isAdmin();
       }
     }

@@ -30,14 +30,23 @@ export async function listAnexos(parent: CreateAnexoParams['parent'], parentId: 
     orderBy('uploadedAt', 'desc'),
   )
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Anexo)
+  const all = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Anexo)
+  // Filtra anexos internos pra qualquer role != admin (rules já bloqueiam,
+  // mas o client filtra antes pra evitar erros 'permission-denied' ruidosos).
+  const role = useAuthStore.getState().user?.role
+  if (role === 'admin') return all
+  return all.filter(a => a.visibleToClient !== false)
 }
 
 export async function createAnexo(params: CreateAnexoParams): Promise<string> {
   const user = useAuthStore.getState().user
   if (!user) throw new Error('Não autenticado')
 
-  const path = `${params.parent}/${params.parentId}/${params.categoria ?? 'OUTRO'}`
+  const isPrivate = params.visibleToClient === false
+  // Anexos privados moram em path 'INTERNO' — Storage rules usam isso pra
+  // bloquear download por member/owner sem precisar ler doc do anexo.
+  const folder = isPrivate ? 'INTERNO' : (params.categoria ?? 'OUTRO')
+  const path = `${params.parent}/${params.parentId}/${folder}`
   const upload = await uploadFile({
     path,
     file: params.file,

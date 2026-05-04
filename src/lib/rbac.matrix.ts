@@ -24,22 +24,24 @@ export const RBAC_MATRIX: Record<RBACResource, ResourceMatrix> = {
   },
   user: {
     create: { admin: true, company_owner: 'own', company_member: false, guest: false },
-    read: { admin: true, company_owner: 'own', company_member: 'self', guest: false },
+    // Member pode listar/ler outros membros da MESMA empresa.
+    read: { admin: true, company_owner: 'own', company_member: 'own', guest: false },
     update: { admin: true, company_owner: 'own', company_member: 'self', guest: false },
     delete: { admin: true, company_owner: 'own', company_member: false, guest: false },
-    list: { admin: true, company_owner: 'own', company_member: 'self', guest: false },
+    list: { admin: true, company_owner: 'own', company_member: 'own', guest: false },
   },
   projeto: {
     create: { admin: true, company_owner: false, company_member: false, guest: false },
     read: { admin: true, company_owner: 'own', company_member: 'own', guest: false },
-    update: { admin: true, company_owner: false, company_member: false, guest: false },
+    // "Alertar pagamento": owner sim, member não.
+    update: { admin: true, company_owner: 'own', company_member: false, guest: false },
     delete: { admin: true, company_owner: false, company_member: false, guest: false },
     list: { admin: true, company_owner: 'own', company_member: 'own', guest: false },
   },
   rrt: {
     create: { admin: true, company_owner: false, company_member: false, guest: false },
     read: { admin: true, company_owner: 'own', company_member: 'own', guest: false },
-    update: { admin: true, company_owner: false, company_member: false, guest: false },
+    update: { admin: true, company_owner: 'own', company_member: false, guest: false },
     delete: { admin: true, company_owner: false, company_member: false, guest: false },
     list: { admin: true, company_owner: 'own', company_member: 'own', guest: false },
   },

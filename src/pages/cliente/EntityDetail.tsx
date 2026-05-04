@@ -10,6 +10,7 @@ import { getRRT, alertBoletoPaid, alertRRTPayment } from '@/lib/api/rrts'
 import { getProjeto, alertProjetoPayment } from '@/lib/api/projetos'
 import { brl, formatCnpj, formatDate } from '@/lib/format'
 import { toast } from '@/components/ui/Toast'
+import { useAuthStore } from '@/stores/auth.store'
 import type { Projeto, RRT } from '@/types'
 
 export default function ClienteEntityDetail() {
@@ -38,8 +39,10 @@ export default function ClienteEntityDetail() {
 }
 
 function RRTView({ rrt, reload }: { rrt: RRT; reload(): void }) {
-  const canAlertBoleto = rrt.status === 'PROVISORIA' && !rrt.boletoAlertedAt
-  const canAlertPayment = rrt.status === 'NF_EMITIDA' && !rrt.paymentAlertedAt
+  const role = useAuthStore(s => s.user?.role)
+  const isOwner = role === 'company_owner' || role === 'admin'
+  const canAlertBoleto = isOwner && rrt.status === 'PROVISORIA' && !rrt.boletoAlertedAt
+  const canAlertPayment = isOwner && rrt.status === 'NF_EMITIDA' && !rrt.paymentAlertedAt
 
   async function handleAlertBoleto() {
     try {
@@ -125,7 +128,9 @@ function RRTView({ rrt, reload }: { rrt: RRT; reload(): void }) {
 }
 
 function ProjetoView({ projeto, reload }: { projeto: Projeto; reload(): void }) {
-  const canAlertPayment = projeto.status === 'ENTREGUE' && !projeto.paymentAlertedAt
+  const role = useAuthStore(s => s.user?.role)
+  const isOwner = role === 'company_owner' || role === 'admin'
+  const canAlertPayment = isOwner && projeto.status === 'ENTREGUE' && !projeto.paymentAlertedAt
 
   async function handleAlertPayment() {
     try {

@@ -28,9 +28,9 @@
   },
   "include": [
     "src",
+    "api/**/*.ts",
     "scripts/**/*.ts",
     "tests/**/*.ts",
-    "functions/src/**/*.ts",
     "vite.config.ts",
     "vitest.config.ts",
     "eslint.config.js"

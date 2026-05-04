@@ -4,6 +4,7 @@ import { doc, setDoc, updateDoc } from 'firebase/firestore'
 import {
   setupTestEnv,
   adminCtx,
+  ownerCtx,
   memberCtx,
   outsiderCtx,
   COMPANY_A,
@@ -80,8 +81,18 @@ describe('rules: rrts', () => {
     )
   })
 
-  it('member alerta pagamento (apenas campos permitidos)', async () => {
+  it('owner alerta pagamento (apenas campos permitidos)', async () => {
     await assertSucceeds(
+      updateDoc(doc(ownerCtx(env).firestore(), 'rrts', RRT_ID), {
+        paymentAlertedAt: new Date(),
+        paymentAlertedBy: 'owner-uid',
+        updatedAt: new Date(),
+      }),
+    )
+  })
+
+  it('member NÃO alerta pagamento (só owner)', async () => {
+    await assertFails(
       updateDoc(doc(memberCtx(env).firestore(), 'rrts', RRT_ID), {
         paymentAlertedAt: new Date(),
         paymentAlertedBy: 'member-uid',

@@ -10,7 +10,6 @@ lerna-debug.log*
 # Dependencies
 node_modules
 .pnpm-store
-functions/node_modules
 
 # Build outputs
 dist
@@ -33,6 +32,8 @@ build
 *.sln
 *.sw?
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
 # ─────────────────────────────────────────────────────────────
 # SECRETS — NEVER COMMIT (verificado em pre-commit hook)
@@ -40,6 +41,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+.env*.local
 
 # Firebase service accounts
 service-account*.json
@@ -66,19 +68,3 @@ migration-report-*.md
 coverage
 *.lcov
 .nyc_output
-
-# OS-specific
-Desktop.ini
-$RECYCLE.BIN/
-
-# Functions deploy artifacts
-functions/lib
-functions/.runtimeconfig.json
-
-.vercel
-.env*.local
-
-.vercel
-_trash_vercel_*
-
-.vercel
