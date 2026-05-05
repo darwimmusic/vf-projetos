@@ -7,6 +7,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  where,
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { uploadFile, deleteFile } from '../storage'
@@ -25,17 +26,17 @@ interface CreateAnexoParams {
 }
 
 export async function listAnexos(parent: CreateAnexoParams['parent'], parentId: string): Promise<Anexo[]> {
-  const q = query(
-    collection(db, parent, parentId, 'anexos'),
-    orderBy('uploadedAt', 'desc'),
-  )
-  const snap = await getDocs(q)
-  const all = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Anexo)
-  // Filtra anexos internos pra qualquer role != admin (rules já bloqueiam,
-  // mas o client filtra antes pra evitar erros 'permission-denied' ruidosos).
+  // Rules de não-admin exigem `resource.data.visibleToClient == true`.
+  // Firestore só autoriza a query se o client filtrar pelo MESMO predicado;
+  // sem isso, a query inteira é rejeitada com "Missing or insufficient permissions".
   const role = useAuthStore.getState().user?.role
-  if (role === 'admin') return all
-  return all.filter(a => a.visibleToClient !== false)
+  const ref = collection(db, parent, parentId, 'anexos')
+  const q =
+    role === 'admin'
+      ? query(ref, orderBy('uploadedAt', 'desc'))
+      : query(ref, where('visibleToClient', '==', true), orderBy('uploadedAt', 'desc'))
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Anexo)
 }
 
 export async function createAnexo(params: CreateAnexoParams): Promise<string> {

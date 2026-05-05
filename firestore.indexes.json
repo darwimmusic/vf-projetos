@@ -132,6 +132,14 @@
         { "fieldPath": "active", "order": "ASCENDING" },
         { "fieldPath": "uploadedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "anexos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "visibleToClient", "order": "ASCENDING" },
+        { "fieldPath": "uploadedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
