@@ -13,6 +13,7 @@ const NAV = [
   { to: '/c/chamados', label: 'Chamados' },
   { to: '/c/calendario', label: 'Agenda' },
   { to: '/c/relatorios', label: 'Relatórios' },
+  { to: '/c/biblioteca', label: 'Biblioteca' },
   { to: '/c/time', label: 'Time' },
 ] as const
 

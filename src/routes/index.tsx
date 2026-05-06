@@ -106,6 +106,7 @@ export const router = createBrowserRouter([
           { path: '/c/chamados/:id', element: <S><ChamadoDetail isAdminView={false} /></S> },
           { path: '/c/calendario', element: <S><ClienteCalendario /></S> },
           { path: '/c/time', element: <S><ClienteTime /></S> },
+          { path: '/c/biblioteca', element: <S><PublicLibPage /></S> },
           { path: '/c/relatorios', element: <S><ClienteRelatorios /></S> },
         ],
       },
